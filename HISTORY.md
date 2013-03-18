@@ -1,12 +1,12 @@
-### v4.1 - 4.3
+### v4.1 - v4.3
  * Embedded torrent results in original page.
 
-### v3.3 - 4.1
+### v3.3 - v4.1
  * Revived Script, uses jQuery now
  * Removed Demonoid support (R.I.P.), youtube, allsubs, and google download links
  * Added The Pirate Bay magnet download link
 
-### v2.9 - 3.3
+### v2.9 - v3.3
  * Added support for HTTPS on The Pirate Bay
  * Fixed the script as it was not working.
 
