@@ -74,6 +74,9 @@ function site(string) {
 }
 
 function add_links(otitle, oyear) {
+    var tpb_link = $("<a target='_blank' href='" + get_tpb_search(otitle + " " + oyear) + "'><img width='16' height='16' alt='Show Download Links' src='" + tpb_icon + "'/></a>");
+    title_el.append('<br/>');
+    title_el.append(tpb_link);
     GM_xmlhttpRequest({
         method: 'GET',
         url: get_tpb_search(otitle + " " + oyear),
@@ -109,11 +112,10 @@ function add_links(otitle, oyear) {
                 } else if (site('moviefone')) {
                     main = $("div#main-column");
                     container = $('<div class=""></div>');
-                    header_el = $("<div class='movie-module-head red'></div>");
+                    header_el = $("<div class='movie-module-head'></div>");
                     header_el.append("<div class='head-left'></div><h3 class='head-center'>Downloads</h3><div class='head-right'></div>");
                     container.append(header_el);
                 }
-                var tpb_link = $("<img width='16' height='16' alt='Show Download Links' src='" + tpb_icon + "'/>");
                 var seed_cells = $("tbody tr td:nth-child(3)", searchResult);
                 for (var i = 0; i < seed_cells.length; i++) {
                     var ccell = $(seed_cells[i]);
@@ -121,20 +123,9 @@ function add_links(otitle, oyear) {
                         ccell.parent().remove();
                     }
                 }
-                tpb_link.css('cursor', 'pointer');
-                tpb_link.click(function() {
-                    if (container.css('display') === 'none') {
-                        container.show();
-                    } else {
-                        container.hide();
-                    }
-                });
-                title_el.append('<br/>');
-                title_el.append(tpb_link);
                 searchResult.append($('<tr><td>&nbsp;</td></tr>'));
                 searchResult.width('98%');
                 searchResult.css('margin-left', '1%');
-                container.hide();
                 container.append(searchResult);
                 main.prepend(container);
                 var magnet = $("[title='Download this torrent using magnet']", searchResult)[0];
