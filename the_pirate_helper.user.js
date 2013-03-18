@@ -2,7 +2,7 @@
 // @name           The Pirate Helper
 // @description    Enhances your pirating experience!
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js
-// @version        4.1
+// @version        4.2
 // @date           2013-03-17
 // @source         http://userscripts.org/scripts/show/56244
 // @identifier     http://userscripts.org/scripts/source/56244.user.js
@@ -15,11 +15,12 @@
 // ==/UserScript==
 
 var
-        SCRIPT_VERSION = "4.1",
+        SCRIPT_VERSION = "4.2",
         DATE = new Date(),
         $ = jQuery,
         parser = new DOMParser(),
         title_el = null,
+        container = null,
         tpb_icon = "data:image/ico;base64,Qk04AwAAAAAAADYAAAAoAAAAEAAAABAAAAABABgAAAAAAAAAAADgTAAA4EwAAAAAAAAAAAAA/////////////////////////////////////////////////////v7+/////////////Pz8vb297Ozs////////////////////////////////4uLiSUlJ3d3d////////8/PzEhIScnJy8fHx////////////////////8fHxwsLCWFhYAAAAyMjI////////5+fnEBAQICAgQkJCV1dXZWVli4uLiYmJUlJSKioqPT09bm5uHh4eYWFhwcHBubm5bGxsQEBAp6end3d3FBQUAAAAFBQUOTk5ISEhGRkZPT09WVlZQkJCKioqJycnenp6AAAAQUFBPz8/YGBgjo6O0dHR+/v7////////7+/vxcXFnZ2dg4ODExMTQEBAv7+/AAAAgoKCjo6OpaWltra2qqqqpqampaWlpKSkra2tr6+vsbGx5eXll5eXW1tb1NTUcXFxmJiYAwMDAAAANzc3VFRUGxsbAAAAX19fPDw8ERERAAAAQUFB/v7+/Pz8////////nJycAAAAAAAAAAAAHx8fCwsLAAAAJiYmBQUFAAAAAAAAKysr+vr6////////////nJycAAAAAAAADw8PAAAAAAAAAAAAAAAADQ0NAwMDAAAANjY2+vr6////////////rq6uAAAANjY25eXlWVlZHx8fJycnIyMj0dHRhoaGAAAAV1dX////////////////r6+vAAAALS0t0tLSX19fsrKy2dnZZWVlsrKyiIiIAAAAWVlZ////////////////r6+vAAAAAAAABQUFAgICExMTEBAQAwMDAwMDAQEBAAAAWlpa////////////////q6urAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVFRU////////////////19fXSUlJQUFBQ0NDQ0NDQ0NDQ0NDQ0NDQ0NDQkJCQkJCqKio/////////////////////////v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+/v7+////////////AAA=",
         magnet_icon = 'data:image/gif;base64,R0lGODlhDAAMALMPAOXl5ewvErW1tebm5oocDkVFRePj47a2ts0WAOTk5MwVAIkcDesuEs0VAEZGRv///yH5BAEAAA8ALAAAAAAMAAwAAARB8MnnqpuzroZYzQvSNMroUeFIjornbK1mVkRzUgQSyPfbFi/dBRdzCAyJoTFhcBQOiYHyAABUDsiCxAFNWj6UbwQAOw==';
 
@@ -68,22 +69,89 @@ function get_tpb_search(string) {
     return "http://thepiratebay.se/search/" + escape(string) + "/0/7/200";
 }
 
+function site(string) {
+    return document.location.href.indexOf(string) !== -1
+}
+
 function add_links(otitle, oyear) {
-    var title = otitle + " " + oyear;
-    var tpb_link = "&nbsp;&nbsp;<a href='" + get_tpb_search(title) + "' target='_blank'><img width='16' height='16' alt='The Pirate Bay' src='" + tpb_icon + "'/></a>&nbsp;&nbsp;";
-    title_el.append(tpb_link);
     GM_xmlhttpRequest({
         method: 'GET',
-        url: get_tpb_search(title),
+        url: get_tpb_search(otitle + " " + oyear),
         onload: function(rD) {
             var xmlDoc = $.parseHTML(rD.responseText);
-            var magnet = $("[title='Download this torrent using magnet']", xmlDoc)[0];
-            if (typeof magnet !== 'undefined') {
-                var link = $("<a href='" + magnet + "'><img width='16' height='16' alt='Magnet Download' src='" + magnet_icon + "'/></a>");
-                title_el.append(link);
+            var searchResult = $('#searchResult', xmlDoc);
+            var numRows = $('tr', searchResult);
+            if (numRows.length > 0) {
+                if (numRows.length > 5) {
+                    $('tbody tr:gt(4)', searchResult).remove();
+                }
+                $('#tableHead tr:first', searchResult).remove();
+                var headers = $('th', searchResult);
+                headers[0].innerHTML = 'Type';
+                headers[1].innerHTML = 'Name';
+                headers[2].innerHTML = 'S';
+                headers[3].innerHTML = 'L';
+                var res_links = $('a', searchResult);
+                for (var i = 0; i < res_links.length; i++) {
+                    var clink = $(res_links[i]);
+                    if (clink.attr('href').indexOf('magnet') !== 0) {
+                        clink.attr('href', 'http://thepiratebay.se' + clink.attr('href'));
+                        clink.attr('target', '_blank');
+                    }
+                }
+                var main;
+                if (site('imdb')) {
+                    main = $('#maindetails_center_top');
+                    container = $('<div class="article title-overview"></div>');
+                } else if (site('rottentomatoes')) {
+                    main = $("[data-param='theater']");
+                    container = $('<div class="content_box"></div>');
+                } else if (site('moviefone')) {
+                    main = $("div#main-column");
+                    container = $('<div class=""></div>');
+                    header_el = $("<div class='movie-module-head red'></div>");
+                    header_el.append("<div class='head-left'></div><h3 class='head-center'>Downloads</h3><div class='head-right'></div>");
+                    container.append(header_el);
+                }
+                var tpb_link = $("<img width='16' height='16' alt='Show Download Links' src='" + tpb_icon + "'/>");
+                var seed_cells = $("tbody tr td:nth-child(3)", searchResult);
+                for (var i = 0; i < seed_cells.length; i++) {
+                    var ccell = $(seed_cells[i]);
+                    if (ccell.html().trim() === '0') {
+                        ccell.parent().remove();
+                    }
+                }
+                tpb_link.css('cursor', 'pointer');
+                tpb_link.click(function() {
+                    if (container.css('display') === 'none') {
+                        container.show();
+                    } else {
+                        container.hide();
+                    }
+                });
+                title_el.append('<br/>');
+                title_el.append(tpb_link);
+                searchResult.append($('<tr><td>&nbsp;</td></tr>'));
+                searchResult.width('98%');
+                searchResult.css('margin-left', '1%');
+                container.hide();
+                container.append(searchResult);
+                main.prepend(container);
+                var magnet = $("[title='Download this torrent using magnet']", searchResult)[0];
+                if (typeof magnet !== 'undefined') {
+                    var magnet_link = $("<a href='" + magnet + "'><img width='16' height='16' alt='Magnet Download' src='" + magnet_icon + "'/></a>");
+                    title_el.append('&nbsp;&nbsp;');
+                    title_el.append(magnet_link);
+                }
+            } else {
+                title_el.append('<br/>No download results...');
             }
         }
     });
+}
+
+function create_results(table) {
+    $('body').append(table);
 }
 
 // on website the pirate bay
