@@ -1,3 +1,5 @@
+[Scripts Index](https://github.com/noahtkeller/GM_Scripts)
+
 # The Pirate Helper
 
 Embeds search results from The Pirate Bay into iMDB
