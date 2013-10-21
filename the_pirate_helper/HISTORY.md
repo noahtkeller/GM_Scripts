@@ -1,3 +1,6 @@
+### v4.4 - v4.6
+ * Misc. bug fixes.
+
 ### v4.1 - v4.4
  * Embedded torrent results in original page
  * Did away with the icons in the title, reducing size of code (no more base64 strings)
