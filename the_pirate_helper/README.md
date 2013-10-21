@@ -16,3 +16,7 @@ and Rotten Tomatoes.
 
  * Make sure you have TamperMonkey, or GreaseMonkey installed.
  * Visit: http://userscripts.org/scripts/source/56244.user.js
+
+## History
+
+[Version History](https://github.com/noahtkeller/GM_Scripts/blob/master/the_pirate_helper/HISTORY.md)
