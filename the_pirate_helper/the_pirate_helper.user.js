@@ -2,20 +2,25 @@
 // @name           The Pirate Helper
 // @description    Enhances your pirating experience!
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js
-// @version        4.6
-// @date           2013-08-11
+// @version        4.7
+// @date           2013-10-20
 // @source         http://userscripts.org/scripts/show/56244
 // @identifier     http://userscripts.org/scripts/source/56244.user.js
 // @author         Noah Keller
 // @namespace      http://userscripts.org/people/105134
+// @grant          GM_xmlhttpRequest
+// @grant          GM_setValue
+// @grant          GM_getValue
+// @grant          GM_registerMenuCommand
 // @include        *thepiratebay.sx/*
 // @include        *imdb.*/title/tt*
 // @include        *rottentomatoes.*
 // @include        http*://www.watchfreemovies.ch/*
+// @include        *tvmuse.eu/tv-shows/*/
 // ==/UserScript==
 
 var
-        SCRIPT_VERSION = "4.6",
+        SCRIPT_VERSION = "4.7",
         DATE = new Date(),
         $ = jQuery,
         parser = new DOMParser(),
@@ -88,7 +93,7 @@ function remove_dead_torrents(searchResult) {
 function fetch_results(otitle, oyear) {
     GM_xmlhttpRequest({
         method: 'GET',
-        url: get_tpb_search(otitle + " " + oyear),
+        url: get_tpb_search(oyear === false ? otitle : otitle + " " + oyear),
         onload: function(rD) {
             var xmlDoc = $.parseHTML(rD.responseText);
             var searchResult = $('#searchResult', xmlDoc);
@@ -129,6 +134,9 @@ function fetch_results(otitle, oyear) {
                 } else if (site('rottentomatoes')) {
                     main = $("[data-param='theater']");
                     container = $('<div class="content_box"></div>');
+                } else if (site("tvmuse")) {
+                    main = $("div#content");
+                    container = $("<div></div>");
                 }
                 searchResult.append($('<tr><td>&nbsp;</td><td><a target="_blank" href="' + get_tpb_search(otitle + " " + oyear) + '">more results...</a></td></tr>'));
                 searchResult.width('98%');
@@ -214,4 +222,10 @@ if (site("thepiratebay.sx") && onThePirateBay) {
     $('.header').remove();
     $('script').remove();
     $('div[id="movie"]').remove();
+} else if (site("tvmuse.eu")) {
+    if (site("/tv-shows/")) {
+        title_el = $("h1.mb_0");
+        title = title_el.children().html();
+        fetch_results(title, false);
+    }
 }

@@ -3,7 +3,7 @@
 # The Pirate Helper
 
 Embeds search results from The Pirate Bay into iMDB
-and Rotten Tomatoes.
+and Rotten Tomatoes, and TVMuse.
 
 ## Features
 
@@ -12,12 +12,13 @@ and Rotten Tomatoes.
  * Makes search form order by seeds highest to lowest by default on The Pirate Bay
  * Auto removes torrents with 0 seeds on The Pirate Bay
  * Random UI Tweaks on The Pirate Bay
- * Adds The Pirate Bay and Magnet Download links to iMDB, and Rotten Tomatoes
+ * Adds The Pirate Bay and Magnet Download links to iMDB, and Rotten Tomatoes, and TVMuse
 
 ## Installation
 
  * Make sure you have TamperMonkey, or GreaseMonkey installed.
  * Visit: http://userscripts.org/scripts/source/56244.user.js
+ * Or to install from GitHub Repository, visit: https://github.com/noahtkeller/GM_Scripts/raw/master/the_pirate_helper/the_pirate_helper.user.js
 
 ## History
 

@@ -1,5 +1,8 @@
+### v4.6 - v4.7
+ * Added support for TVMuse
+
 ### v4.4 - v4.6
- * Misc. bug fixes.
+ * Misc. bug fixes
 
 ### v4.1 - v4.4
  * Embedded torrent results in original page
