@@ -1,9 +1,11 @@
 [Scripts Index](https://github.com/noahtkeller/GM_Scripts)
+[UserScripts](http://userscripts.org/scripts/show/56244)
 
 # The Pirate Helper
 
 Embeds search results from The Pirate Bay into iMDB
-and Rotten Tomatoes, and TVMuse.
+and Rotten Tomatoes, and TVMuse. Cleans up The Pirate Bay
+a little.
 
 ## Features
 

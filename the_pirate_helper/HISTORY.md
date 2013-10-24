@@ -1,3 +1,7 @@
+### v4.7 - v4.8
+ * Added anonymous tracker, all it does is tell me how many people use this script, out of curiosity
+ * The source for the tracker can be found on my github
+
 ### v4.6 - v4.7
  * Added support for TVMuse
 

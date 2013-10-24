@@ -2,7 +2,7 @@
 // @name           The Pirate Helper
 // @description    Enhances your pirating experience!
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js
-// @version        4.7
+// @version        4.8
 // @date           2013-10-20
 // @source         http://userscripts.org/scripts/show/56244
 // @identifier     http://userscripts.org/scripts/source/56244.user.js
@@ -20,7 +20,8 @@
 // ==/UserScript==
 
 var
-        SCRIPT_VERSION = "4.7",
+        SCRIPT_VERSION = "4.8",
+        ID = '56244',
         DATE = new Date(),
         $ = jQuery,
         parser = new DOMParser(),
@@ -70,6 +71,19 @@ if ('MozBoxSizing' in document.documentElement.style) { // Updating is built int
         GM_setValue('lu', '' + DATE.getTime());
         Update();
     }
+}
+
+lp = GM_getValue('lp', '0');
+cp = '' + DATE.getMonth() + DATE.getFullYear();
+if (lp !== cp) {
+    GM_setValue('lp', cp);
+    GM_xmlhttpRequest({
+        method: 'GET',
+        //url: "http://localhost:5580/report/" + ID,
+        url: "http://192.241.151.71:5580/report/" + ID,
+        onload: function(responseDetails) {
+        }
+    });
 }
 
 function get_tpb_search(string) {
