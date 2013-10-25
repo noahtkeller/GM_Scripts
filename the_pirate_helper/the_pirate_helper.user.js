@@ -2,7 +2,7 @@
 // @name           The Pirate Helper
 // @description    Enhances your pirating experience!
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js
-// @version        4.8
+// @version        4.9
 // @date           2013-10-20
 // @source         http://userscripts.org/scripts/show/56244
 // @identifier     http://userscripts.org/scripts/source/56244.user.js
@@ -20,7 +20,7 @@
 // ==/UserScript==
 
 var
-        SCRIPT_VERSION = "4.8",
+        SCRIPT_VERSION = "4.9",
         ID = '56244',
         DATE = new Date(),
         $ = jQuery,
@@ -76,6 +76,7 @@ if ('MozBoxSizing' in document.documentElement.style) { // Updating is built int
 lp = GM_getValue('lp', '0');
 cp = '' + DATE.getMonth() + DATE.getFullYear();
 if (lp !== cp) {
+
     GM_setValue('lp', cp);
     GM_xmlhttpRequest({
         method: 'GET',
