@@ -7,6 +7,9 @@ Embeds search results from The Pirate Bay and Stream link (when available)
 into iMDB, Rotten Tomatoes, and TVMuse. Cleans up The Pirate Bay
 a little.
 
+## Rate This Script
+[Review script here](http://userscripts.org/reviews/new?script_id=56244)
+
 ## Features
 
  * Works well with Chrome and Firefox.
