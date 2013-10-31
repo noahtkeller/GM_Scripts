@@ -22,8 +22,8 @@
 
 var
         SCRIPT_VERSION = "5.0",
-        tracker_address = "http://localhost:5580/",
-        //tracker_address = "http://192.241.151.71:5580/",
+        //tracker_address = "http://localhost:5580/",
+        tracker_address = "http://192.241.151.71:5580/",
         ui = 1000 * 60 * 60 * 24,
         ID = '56244',
         DATE = new Date(),
