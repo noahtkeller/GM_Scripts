@@ -3,8 +3,8 @@
 
 # The Pirate Helper
 
-Embeds search results from The Pirate Bay into iMDB
-and Rotten Tomatoes, and TVMuse. Cleans up The Pirate Bay
+Embeds search results from The Pirate Bay and Stream link (when available)
+into iMDB, Rotten Tomatoes, and TVMuse. Cleans up The Pirate Bay
 a little.
 
 ## Features
@@ -14,7 +14,7 @@ a little.
  * Makes search form order by seeds highest to lowest by default on The Pirate Bay
  * Auto removes torrents with 0 seeds on The Pirate Bay
  * Random UI Tweaks on The Pirate Bay
- * Adds The Pirate Bay and Magnet Download links to iMDB, and Rotten Tomatoes, and TVMuse
+ * Adds Magnet and Stream links to iMDB, Rotten Tomatoes, and TVMuse
 
 ## Installation
 

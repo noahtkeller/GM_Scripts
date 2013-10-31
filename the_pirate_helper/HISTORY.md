@@ -1,3 +1,7 @@
+### v4.9 - v5.0
+ * Added caching ability to speed up script
+ * Rewrote core
+
 ### v4.7 - v4.9
  * Added anonymous tracker, all it does is tell me how many people use this script, out of curiosity
  * The source for the tracker can be found on my github
