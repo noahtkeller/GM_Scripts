@@ -2,8 +2,8 @@
 // @name           The Pirate Helper
 // @description    Enhances your pirating experience!
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js
-// @version        5.0
-// @date           2013-10-31
+// @version        5.1
+// @date           2013-12-26
 // @source         http://userscripts.org/scripts/show/56244
 // @identifier     http://userscripts.org/scripts/source/56244.user.js
 // @author         Noah Keller
@@ -12,7 +12,7 @@
 // @grant          GM_setValue
 // @grant          GM_getValue
 // @grant          GM_registerMenuCommand
-// @include        *thepiratebay.sx/*
+// @include        *thepiratebay.*
 // @include        *imdb*tt*
 // @include        *rottentomatoes*/m/*
 // @include        *watchfreeinhd.com/*
@@ -21,14 +21,15 @@
 // ==/UserScript==
 
 var
-        SCRIPT_VERSION = "5.0",
-        //tracker_address = "http://localhost:5580/",
-        tracker_address = "http://192.241.151.71:5580/",
+        SCRIPT_VERSION = "5.1",
+        //tracker_address = "http://localhost:5581/",
+        tracker_address = "http://192.241.151.71:5581/",
         ui = 1000 * 60 * 60 * 24,
         ID = '56244',
         DATE = new Date(),
         $ = jQuery,
-        title, year,
+        movie = {},
+        title, year, add = false, scraped_stream = false, scraped_torrents = false,
         location = '' + document.location,
         holder = $('<span><span id="streamHolder"></span><span id="torrentHolder" style="margin-left: .25em;"></span></span>');
 
@@ -60,6 +61,7 @@ var check_version = function check_version() {
         url: tracker_address + "version/" + ID,
         onload: function(rD) {
             GM_setValue('lu', Date.now());
+            console.log(rD.responseText);
             if (rD.responseText !== SCRIPT_VERSION) {
                 update();
             }
@@ -82,6 +84,14 @@ var get_data = function(link, callback, post) {
         method: post ? 'POST' : 'GET',
         url: link,
         onload: function(rD) {
+            var xmlDoc = $.parseHTML(rD.responseText);
+            callback(xmlDoc, rD);
+        },
+        ontimeout: function(rD) {
+            var xmlDoc = $.parseHTML(rD.responseText);
+            callback(xmlDoc, rD);
+        },
+        onerror: function(rD) {
             var xmlDoc = $.parseHTML(rD.responseText);
             callback(xmlDoc, rD);
         }
@@ -110,73 +120,78 @@ var append_torrents = function(data) {
         place = $('.main_movie_area');
     else if (site('tvmuse.'))
         place = $('div#content');
-    var wrapper = $('<div style="display: none" class="' + cname + '"><table width="100%"><tr><th width="6%" id="close"><img src="http://www.freestockphotos.biz/thumbs_0001/thumbsmall_15106.png" style="width: 1.5em; cursor:pointer;"></img></th><th width="82%">Name</th><th width="6%">S</th><th>L</th></tr></table><small><a target="_blank" href="https://thepiratebay.sx/search/' + title + ' ' + year + '/0/7/200">All Results</a></small></div>');
+    var wrapper = $('<div style="display: none" class="' + cname + '"><table width="100%"><tr><th width="6%" id="close"><img src="http://www.freestockphotos.biz/thumbs_0001/thumbsmall_15106.png" style="width: 1.5em; cursor:pointer;"></img></th><th width="82%">Name</th><th width="6%">S</th><th>L</th></tr></table><small><a target="_blank" href="https://thepiratebay.se/search/' + title + ' ' + year + '/0/7/200">All Results</a></small></div>');
     var toggle = function() {
         if (wrapper.css('display') === "none")
             wrapper.slideDown();
         else
             wrapper.slideUp();
     };
-    var img = $('<img src="https://thepiratebay.sx/static/img/icon-magnet.gif" style="margin-left: .3em; width: .6em; cursor: pointer;"></img>');
+    var img = $('<img src="https://thepiratebay.se/static/img/icon-magnet.gif" style="margin-left: .3em; width: .6em; cursor: pointer;"></img>');
+    var link = $('<a href="' + data[0].magnet + '"></a>');
+    link.append(img);    
     for (var d in data) {
-        var row = $("<tr style='margin-top: .125em;'><td align='center'><a href='" + data[d].magnet + "'><img src='https://thepiratebay.sx/static/img/icon-magnet.gif'></img></a></td><td>" + data[d].title + "</td><td align='center'>" + data[d].seed + "</td><td align='center'>" + data[d].leech + "</td></tr>");
+        var row = $("<tr style='margin-top: .125em;'><td align='center'><a href='" + data[d].magnet + "'><img src='https://thepiratebay.se/static/img/icon-magnet.gif'></img></a></td><td>" + data[d].name + "</td><td align='center'>" + data[d].seeds + "</td><td align='center'>" + data[d].leeches + "</td></tr>");
         $('table', wrapper).append(row);
     }
     $('th#close', wrapper).click(toggle);
     $('#torrentHolder').click(toggle);
     $('#torrentHolder').css('cursor', 'pointer');
-    $('#torrentHolder').append(img).append(' Torrent');
+    $('#torrentHolder').append(link).append(' Torrent');
     place.prepend(wrapper);
 };
 
 var get_remote = function(title, year) {
-    console.log('get remote');
-    if (typeof year === 'undefined') {
-        scrape_torrents(title);
-    } else {
-        get_data(tracker_address + "movie/" + title + "/" + year, function(xmlDoc, rD) {
-            console.log('remote data');
-            var info = JSON.parse(rD.responseText);
-            console.log(rD);
-            if (typeof info.stream !== 'undefined')
-                append_stream_link(info.stream);
-            else
-                scrape_stream(title, year);
-            if (typeof info.torrents !== 'undefined')
-                append_torrents(info.torrents);
-            else
-                scrape_torrents(title, year);
-        });
+    if (typeof title !== 'undefined') {
+        if (typeof year === 'undefined') {
+            scrape_torrents(title);
+        } else {
+            get_data(tracker_address + "find/" + title + "/" + year, function(xmlDoc, rD) {
+                console.log(rD);
+                if (rD.responseText !== 'Not Found' && rD.responseText !== "") {
+                    var info = JSON.parse(rD.responseText);
+                    if (typeof info.stream !== 'undefined' && info.stream !== null)
+                        append_stream_link(info.stream);
+                    else
+                        scrape_stream(title, year);
+                    if (typeof info.torrents !== 'undefined')
+                        append_torrents(info.torrents);
+                    else
+                        scrape_torrents(title, year);
+                } else {
+                    scrape_stream(title, year);
+                    scrape_torrents(title, year);
+                    add = true;
+                }
+            });
+        }
     }
 };
 
 var scrape_torrents = function(title, year) {
     year = typeof year === 'undefined' ? '' : ' ' + year;
-    var category = typeof year === 'undefined' ? '0' : '200';
-    get_data('http://thepiratebay.sx/search/' + title + year + '/0/7/' + category,
+    var category = '200';
+    get_data('http://thepiratebay.se/search/' + title + year + '/0/7/' + category,
             function(xmlDoc, rD) {
                 var searchResult = $('#searchResult', xmlDoc);
                 var numRows = $('tr', searchResult);
                 if (numRows.length > 0) {
-                    var torrents = {};
+                    movie.torrents = [];
+                    var torrents = movie.torrents;
                     for (var i = 1; i < numRows.length; i++) {
                         var det_link = $('a.detLink', numRows[i]);
                         var mag_link = $("a[title='Download this torrent using magnet']", numRows[i]);
                         var torrent = {
-                            title: det_link.html(),
+                            name: det_link.html(),
                             magnet: mag_link.attr('href'),
-                            seed: parseInt($('td:nth-child(3)', numRows[i]).html()),
-                            leech: parseInt($('td:nth-child(4)', numRows[i]).html())
+                            seeds: parseInt($('td:nth-child(3)', numRows[i]).html()),
+                            leeches: parseInt($('td:nth-child(4)', numRows[i]).html())
                         };
-                        if (torrent.seed !== 0) {
-                            torrents[i - 1] = torrent;
-                        }
+                        if (torrent.seeds !== 0)
+                            torrents.push(torrent);
                     }
-                    report({
-                        title: title,
-                        year: year,
-                        torrents: torrents
-                    });
+                    scraped_torrents = true;
+                    report();
                     append_torrents(torrents);
                 } else {
                     $('#torrentHolder'.holder).append('No torrent results');
@@ -187,22 +202,29 @@ var scrape_torrents = function(title, year) {
 var scrape_stream = function(title, year) {
     var search_cb = function(xmlDoc, rD) {
         var items = $('.index_item', xmlDoc);
+        var found = false;
         for (var i = 0; i < items.length; i++) {
             var citem = $(items[i]);
             var title_string = $('h2', citem).html();
             var ntitle = title_string.split(' (')[0].trim();
             var link = $('a', citem).attr('href');
             var nyear = title_string.split(' (')[1].replace(/\s*(\(|\))/g, '').trim();
-
             if ((ntitle === title) && (nyear === year)) {
                 get_data(link, list_cb);
+                found = true;
                 break;
             }
 
         }
+        if (!found) {
+            movie.stream = null;
+            scraped_stream = true;
+            report();
+        }
     };
     var list_cb = function(xmlDoc, rD) {
         var hosts = $('.version_host', xmlDoc);
+        var found = false;
         for (var i = 0; i < hosts.length; i++) {
             var host = $(hosts[i]);
             var name = host.html().trim();
@@ -210,29 +232,41 @@ var scrape_stream = function(title, year) {
                 var prev = host.parent().prev();
                 var link = $('a', prev);
                 var link_location = 'http://www.watchfreemovies.ch' + link.attr('href');
+                found = true;
                 get_data(link_location, form_cb);
             }
 
         }
+        if (!found) {
+            movie.stream = null;
+            scraped_stream = true;
+            report();
+        }
     };
     var form_cb = function(xmlDoc, rD) {
         append_stream_link(rD.finalUrl.split('.com/')[1].trim());
-        report({
-            title: title,
-            year: year,
-            stream: rD.finalUrl.split('.com/')[1].trim()
-        });
+        movie.stream = rD.finalUrl.split('.com/')[1].trim();
+        scraped_stream = true;
+        report();
     };
     get_data('http://www.watchfreemovies.ch/search/' + title.replace(/ /g, '-').toLowerCase() + '/', search_cb);
 };
 
-var report = function report(data) {
-    GM_xmlhttpRequest({
-        method: 'GET',
-        url: tracker_address + "report?data=" + escape(JSON.stringify(data)),
-        onload: function(rD) {
+var report = function report() {
+    if (location.indexOf('imdb.com') !== -1) {
+        if (scraped_stream && scraped_torrents) {
+            console.log(movie);
+            GM_xmlhttpRequest({
+                method: 'GET',
+                url: tracker_address + "add?data=" + escape(JSON.stringify(movie)),
+                onload: function(rD) {
+                    console.log(rD.responseText);
+                }
+            });
         }
-    });
+    }
+    /**
+     */
 };
 
 var update = function update() {
@@ -240,10 +274,10 @@ var update = function update() {
         document.location = 'http://userscripts.org/scripts/source/56244.user.js';
     }
 };
-
+    
 GM_registerMenuCommand('Update The Pirate Helper', check_version);
 
-if ('MozBoxSizing' in document.documentElement.style) {
+if (isFirefox) {
     var lu = GM_getValue('lu', '0');
     if ((Date.now() - parseInt(lu)) > ui) {
         check_version();
@@ -257,7 +291,7 @@ cp = '' + DATE.getMonth() + DATE.getFullYear();
 if (lp !== cp) {
     GM_xmlhttpRequest({
         method: 'GET',
-        url: tracker_address + "ping/" + ID,
+        url: tracker_address + "count/" + ID,
         onload: function() {
             GM_setValue('lp', cp);
         }
@@ -276,22 +310,32 @@ switch (site()) {
         break;
     case 'imdb':
         if ($('#overview-top .infobar').html().indexOf('TV Series') === -1) {
-            title = $("[itemprop='name']").html().trim();
-            year = $('#overview-top h1.header a').html().trim();
-            report({
-                title: title,
-                image: $("[itemprop='image']").attr('src'),
-                genre: $("[itemprop='genre']").html().trim(),
-                duration: $("[itemprop='duration']").html().trim(),
-                year: year,
-                imdb: {
-                    description: $("[itemprop='description']").html().trim(),
-                    rating: $('.star-box-giga-star').html().trim(),
-                    url: location.split('/title/')[1].split(/(\?|\/)/)[0].trim()
-                }
-            });
+            movie.title = $("[itemprop='name']").html().trim();
+            movie.year = $('#overview-top h1.header a').html().trim();
+            movie.director = $("[itemprop='name']", $("[itemprop='director']")).html().trim();
+            movie.poster = $("img", $("#img_primary")).attr('src');
+            movie.description = $("[itemprop='description']").html().trim();
+            movie.genres = [];
+            var genres = $('a', $("[itemprop='genre']"));
+            for (var i = 0; i < genres.length; i++) {
+                movie.genres.push($(genres[i]).html().trim());
+            }
+            movie.writers = [];
+            var writers = $("[itemprop='name']", $("[itemprop='creator']")[0]);
+            for (var i = 0; i < writers.length; i++) {
+                movie.writers.push($(writers[i]).html().trim());
+            }
+            movie.duration = $("[itemprop='duration']").html().trim();
+            movie.uri = 'tt' + location.split('/tt')[1].split('/')[0];
+            movie.rating = $('.star-box-giga-star').html().trim();
+            movie.mpaa = {
+                rating: $("[itemprop='contentRating']").attr('title'),
+                text: $($("[itemprop='contentRating']")[1]).html()
+            };
+            title = movie.title;
+            year = movie.year;
             $('h1.header').append('<br/>').append(holder);
-            get_remote(title, year);
+            get_remote(movie.title, movie.year);
         }
         break;
     case 'rottentomatoes':
@@ -304,16 +348,6 @@ switch (site()) {
             $('a', desc).remove();
             desc.append($('span', desc).text());
             $('span', desc).remove();
-            report({
-                title: title,
-                image: $("[itemprop='image']").attr('src'),
-                year: year,
-                rt: {
-                    description: $("[itemprop='description']").text().trim().replace(/(\t|\n)/g, '').replace(/\$.$/, ''),
-                    rating: $("[itemprop='ratingValue']").html().trim(),
-                    url: location.split('/m/')[1].split(/(\?|\/)/)[0].trim()
-                }
-            });
             $("[itemprop='name']").append('<br/>').append(holder);
             get_remote(title, year);
         }
