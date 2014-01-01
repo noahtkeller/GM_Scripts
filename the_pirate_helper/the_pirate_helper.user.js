@@ -2,7 +2,7 @@
 // @name           The Pirate Helper
 // @description    Enhances your pirating experience!
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js
-// @version        5.1
+// @version        5.2
 // @date           2013-12-26
 // @source         http://userscripts.org/scripts/show/56244
 // @identifier     http://userscripts.org/scripts/source/56244.user.js
@@ -13,15 +13,24 @@
 // @grant          GM_getValue
 // @grant          GM_registerMenuCommand
 // @include        *thepiratebay.*
-// @include        *imdb*tt*
+// @include        *://jntlesnev5o7zysa.onion/*
+// @include        *://194.71.107.80/*
+// @include        *://194.71.107.81/*
+// @include        *://*imdb.*/title/tt*
 // @include        *rottentomatoes*/m/*
 // @include        *watchfreeinhd.com/*
 // @include        http*://www.watchfreemovies.ch/*
 // @include        *tvmuse.eu/*/*/
 // ==/UserScript==
 
+if (GM_getValue('options', null) === null)
+    GM_setValue('options', JSON.stringify({
+        tpb_location: 'thepiratebay.se',
+        tpb_protocol: 'https'
+    }));
+
 var
-        SCRIPT_VERSION = "5.1",
+        SCRIPT_VERSION = "5.2",
         //tracker_address = "http://localhost:5581/",
         tracker_address = "http://192.241.151.71:5581/",
         ui = 1000 * 60 * 60 * 24,
@@ -31,6 +40,7 @@ var
         movie = {},
         title, year, add = false, scraped_stream = false, scraped_torrents = false,
         location = '' + document.location,
+        options = JSON.parse(GM_getValue('options')),
         holder = $('<span><span id="streamHolder"></span><span id="torrentHolder" style="margin-left: .25em;"></span></span>');
 
 // Credits for this portion go to an unknown person
@@ -55,16 +65,18 @@ var site = function site(check) {
     return typeof check === 'undefined' ? s : s === check;
 };
 
-var check_version = function check_version() {
+var check_version = function check_version(not_needed) {
     GM_xmlhttpRequest({
         method: 'GET',
         url: tracker_address + "version/" + ID,
         onload: function(rD) {
             GM_setValue('lu', Date.now());
-            console.log(rD.responseText);
-            if (rD.responseText !== SCRIPT_VERSION) {
+            var response_version = parseInt(rD.responseText.replace(/\./g, ''));
+            var script_version = parseInt(SCRIPT_VERSION.replace(/\./g, ''));
+            if (response_version > script_version)
                 update();
-            }
+            else if (typeof not_needed === 'function')
+                not_needed();
         }
     });
 };
@@ -120,18 +132,18 @@ var append_torrents = function(data) {
         place = $('.main_movie_area');
     else if (site('tvmuse.'))
         place = $('div#content');
-    var wrapper = $('<div style="display: none" class="' + cname + '"><table width="100%"><tr><th width="6%" id="close"><img src="http://www.freestockphotos.biz/thumbs_0001/thumbsmall_15106.png" style="width: 1.5em; cursor:pointer;"></img></th><th width="82%">Name</th><th width="6%">S</th><th>L</th></tr></table><small><a target="_blank" href="https://thepiratebay.se/search/' + title + ' ' + year + '/0/7/200">All Results</a></small></div>');
+    var wrapper = $('<div style="display: none" class="' + cname + '"><table width="100%"><tr><th width="6%" id="close"><img src="http://www.freestockphotos.biz/thumbs_0001/thumbsmall_15106.png" style="width: 1.5em; cursor:pointer;"></img></th><th width="82%">Name</th><th width="6%">S</th><th>L</th></tr></table><small><a target="_blank" href="' + options.tpb_protocol + '://' + options.tpb_location + '/search/' + title + ' ' + year + '/0/7/200">All Results</a></small></div>');
     var toggle = function() {
         if (wrapper.css('display') === "none")
             wrapper.slideDown();
         else
             wrapper.slideUp();
     };
-    var img = $('<img src="https://thepiratebay.se/static/img/icon-magnet.gif" style="margin-left: .3em; width: .6em; cursor: pointer;"></img>');
+    var img = $('<img src="' + options.tpb_protocol + '://' + options.tpb_location + '/static/img/icon-magnet.gif" style="margin-left: .3em; width: .6em; cursor: pointer;"></img>');
     var link = $('<a href="' + data[0].magnet + '"></a>');
-    link.append(img);    
+    link.append(img);
     for (var d in data) {
-        var row = $("<tr style='margin-top: .125em;'><td align='center'><a href='" + data[d].magnet + "'><img src='https://thepiratebay.se/static/img/icon-magnet.gif'></img></a></td><td>" + data[d].name + "</td><td align='center'>" + data[d].seeds + "</td><td align='center'>" + data[d].leeches + "</td></tr>");
+        var row = $("<tr style='margin-top: .125em;'><td align='center'><a href='" + data[d].magnet + "'><img src='" + options.tpb_protocol + '://' + options.tpb_location + "/static/img/icon-magnet.gif'></img></a></td><td>" + data[d].name + "</td><td align='center'>" + data[d].seeds + "</td><td align='center'>" + data[d].leeches + "</td></tr>");
         $('table', wrapper).append(row);
     }
     $('th#close', wrapper).click(toggle);
@@ -171,7 +183,7 @@ var get_remote = function(title, year) {
 var scrape_torrents = function(title, year) {
     year = typeof year === 'undefined' ? '' : ' ' + year;
     var category = '200';
-    get_data('http://thepiratebay.se/search/' + title + year + '/0/7/' + category,
+    get_data(options.tpb_protocol + '://' + options.tpb_location + '/search/' + title + year + '/0/7/' + category,
             function(xmlDoc, rD) {
                 var searchResult = $('#searchResult', xmlDoc);
                 var numRows = $('tr', searchResult);
@@ -265,17 +277,108 @@ var report = function report() {
             });
         }
     }
-    /**
-     */
 };
 
 var update = function update() {
-    if (confirm("Update needed for The Pirate Helper\nPress Ok to continue")) {
+    if (confirm("Update needed for The Pirate Helper\nPress Ok to continue"))
         document.location = 'http://userscripts.org/scripts/source/56244.user.js';
+};
+
+var showOptions = function() {
+    var wrapper = null, saveButton, updateButton, closeButton, tpb_location_label, tpb_location_input
+            , tpb_protocol_label, tpb_protocol_select, set_tpb_location_button;
+    var set_tpb_location = function() {
+        get_data(tracker_address + 'tpb_location', function(xmlDoc, rD) {
+            options.tpb_location = rD.responseText;
+            GM_setValue('options', JSON.stringify(options));
+            wrapper.hide();
+        });
+    };
+    var createOptions = function() {
+        wrapper = $('<div></div>');
+        wrapper.css({
+            'border-radius': '1em',
+            width: '50%',
+            position: 'absolute',
+            padding: '1em',
+            'padding-bottom': '3em',
+            left: '25%',
+            top: '25%',
+            border: '1px solid black',
+            'z-index': '1000000',
+            'background-color': 'gray'
+        });
+
+        saveButton = $('<button>Save</button>');
+        saveButton.click(saveOptions);
+        saveButton.css({
+            position: 'absolute',
+            left: '1em',
+            bottom: '.75em'
+        });
+        wrapper.append(saveButton);
+
+        updateButton = $('<button>Update Script</button>');
+        updateButton.click(function() {
+            check_version(function() {
+                alert('No update necessary');
+            });
+        });
+        updateButton.css({
+            position: 'absolute',
+            right: '1em',
+            bottom: '.75em'
+        });
+        wrapper.append(updateButton);
+
+        closeButton = $('<button>Close</button>');
+        closeButton.click(function() {
+            wrapper.hide();
+        });
+        closeButton.css({
+            position: 'absolute',
+            right: '1em',
+            top: '.75em'
+        });
+        wrapper.append(closeButton);
+
+        set_tpb_location_button = $('<button>Default TPB Location</button>');
+        set_tpb_location_button.click(set_tpb_location);
+        set_tpb_location_button.css({
+            position: 'absolute',
+            left: '20%',
+            bottom: '.75em'
+        });
+        wrapper.append(set_tpb_location_button);
+
+        tpb_location_label = $('<label for="tpb_location_input">TPB Address</label>');
+        tpb_location_input = $('<input id="tpb_location_input" value="' + options.tpb_location + '"></input>');
+        tpb_location_label.append(tpb_location_input);
+        wrapper.append(tpb_location_label);
+        wrapper.append('<br/>');
+
+        tpb_protocol_label = $('<label for="tpb_protocol_select">TPB Protocol</label>');
+        tpb_protocol_select = $('<select id="tpb_protocol_select"><option' + (options.tpb_protocol === 'http' ? ' SELECTED' : '') + '>HTTP</option><option' + (options.tpb_protocol === 'https' ? ' SELECTED' : '') + '>HTTPS</option></select>');
+        tpb_protocol_label.append(tpb_protocol_select);
+        wrapper.append(tpb_protocol_label);
+
+        $(document.body).append(wrapper);
+    };
+    var saveOptions = function() {
+        options.tpb_location = tpb_location_input.val().replace(/(http(s)?\:|\/|\\)/g, '');
+        options.tpb_protocol = tpb_protocol_select.val().toLowerCase();
+        GM_setValue('options', JSON.stringify(options));
+        wrapper.hide();
+    };
+    if (wrapper === null)
+        createOptions();
+    else {
+        tpb_location_input.val(options.tpb_location);
+        wrapper.show();
     }
 };
-    
-GM_registerMenuCommand('Update The Pirate Helper', check_version);
+
+GM_registerMenuCommand('The Pirate Helper', showOptions);
 
 if (isFirefox) {
     var lu = GM_getValue('lu', '0');
@@ -300,7 +403,7 @@ if (lp !== cp) {
 ////////////////////////////////////////////////////////////
 
 switch (site()) {
-    case 'thepiratebay.':
+    case options.tpb_location:
         $('#sky-right').remove();
         $('iframe').remove();
         $('#tableHead .nohover').parent().remove();
