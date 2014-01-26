@@ -14,6 +14,7 @@
 // @source         http://userscripts.org/scripts/show/56244
 // @identifier     http://userscripts.org/scripts/source/56244.user.js
 // @require        http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js
+// @require        https://raw.github.com/noahtkeller/GM_Scripts/master/gm_scripts_include.js
 // @include        http*://thepiratebay.*
 // @include        http*://jntlesnev5o7zysa.onion/*
 // @include        http*://194.71.107.80/*
