@@ -1,3 +1,6 @@
+### v6.0
+* Revived it with basic functionality - adds torrents to iMDB
+
 ### v5.0 - v5.2
 * Rewrote the tracker to use MongoDB for caching movie information
 * Added options menu for configuring The Pirate Bay URL and protocol
