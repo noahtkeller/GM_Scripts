@@ -1,5 +1,5 @@
 [Scripts Index](https://github.com/noahtkeller/GM_Scripts)
-[UserScripts](http://userscripts.org/scripts/show/56244)
+[GreasyFork](https://greasyfork.org/en/scripts/10670-the-pirate-helper)
 
 # The Pirate Helper
 
